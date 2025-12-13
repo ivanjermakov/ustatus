@@ -44,11 +44,11 @@ export const initDb = async (): Promise<Database> => {
     return db
 }
 
-export const getResources = async (): Promise<Resource[]> => {
+export const getResources = async (configs: ResourceConfig[]): Promise<Resource[]> => {
     const raw = await db.all(sql`select * from Status`)
     const resources = groupBy(raw, r => r.name)
-    return Object.values(resources).map(ss => ({
-        config: JSON.parse(ss[0].config),
+    return Object.entries(resources).map(([name, ss]) => ({
+        config: configs.find(c => c.name === name)!,
         series: ss.map(s => JSON.parse(s.status))
     }))
 }

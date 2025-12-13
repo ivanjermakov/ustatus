@@ -6,6 +6,7 @@ import { exit } from 'process'
 import { db, getResources, initDb } from './db'
 import { debug, error, info, request } from './log'
 import { start } from './watchdog'
+import { ResourceConfig } from './api'
 
 const streamFile = (filePath: string, res: ServerResponse): void => {
     const ext = extname(filePath).toLowerCase()
@@ -44,7 +45,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
     const url = new URL(rawUrl)
 
     if (url.pathname === '/resources') {
-        const resources = await getResources()
+        const resources = await getResources(configs)
         res.write(JSON.stringify(resources))
         res.statusCode = 200
         res.end()
@@ -116,6 +117,6 @@ server.listen(port, () => {
     info(`server started :${port}`)
 })
 
-const configs = JSON.parse((await readFile('ustatus.json')).toString())
+const configs: ResourceConfig[] = JSON.parse((await readFile('ustatus.json')).toString())
 debug('using config', configs)
 start(configs)
