@@ -1,10 +1,16 @@
+import { format } from 'date-fns'
 /* @refresh reload */
-import { Component, For, createSignal, onMount } from 'solid-js'
+import { Component, For, Show, createSignal, onMount } from 'solid-js'
 import { render } from 'solid-js/web'
 import { Resource, Status } from './api'
 import './index.css'
 
 type TimeFrame = '1m'
+
+const [resources, setResources] = createSignal<Resource[]>([])
+const [timeFrame, setTimeFrame] = createSignal<TimeFrame>('1m')
+const [hovered, setHovered] = createSignal<Series | undefined>()
+const [mouse, setMouse] = createSignal<MouseEvent | undefined>()
 
 type Series = {
     from: number
@@ -28,13 +34,20 @@ const SeriesComponent: Component<SeriesProps> = (props: SeriesProps) => {
                 degraded: !beforeFirst && uptimeRatio < 1 && uptimeRatio > 0,
                 down: !beforeFirst && uptimeRatio === 0
             }}
-        ></div>
+            onMouseEnter={() => setHovered(props.series)}
+            onMouseLeave={() => setHovered(undefined)}
+        />
     )
 }
 
 const Main: Component = () => {
-    const [resources, setResources] = createSignal<Resource[]>([])
-    const [timeFrame, setTimeFrame] = createSignal<TimeFrame>('1m')
+    onMount(async () => {
+        const res = await fetch('/resources')
+        const resources_ = await res.json()
+        setResources(resources_)
+
+        document.addEventListener('mousemove', setMouse)
+    })
 
     const resourcesView = () => {
         const resources_ = resources()
@@ -67,12 +80,6 @@ const Main: Component = () => {
         }
     }
 
-    onMount(async () => {
-        const res = await fetch('/resources')
-        const resources_ = await res.json()
-        setResources(resources_)
-    })
-
     return (
         <>
             <header>
@@ -90,6 +97,12 @@ const Main: Component = () => {
                     )}
                 </For>
             </div>
+            <Show when={hovered() && mouse()}>
+                <div class="hover" style={{ left: `${mouse()!.clientX}px`, top: `${mouse()!.clientY}px` }}>
+                    <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd H:mm:ss')}</span>
+                    <span>{hovered()!.statuses.length} stats</span>
+                </div>
+            </Show>
         </>
     )
 }
