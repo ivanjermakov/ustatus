@@ -4,10 +4,10 @@ import { extname, join, normalize } from 'path'
 import { readFile, stat } from 'fs/promises'
 import { exit } from 'process'
 import { db, getStats, initDb } from './db'
-import { debug, error, info } from './log'
+import { debug, error, info, request } from './log'
 import { start } from './watchdog'
 
-function streamFile(filePath: string, res: ServerResponse) {
+const streamFile = (filePath: string, res: ServerResponse): void => {
     const ext = extname(filePath).toLowerCase()
     const ctype = contentType[ext] ?? contentType['.txt']
     res.setHeader('Content-Type', ctype)
@@ -17,13 +17,6 @@ function streamFile(filePath: string, res: ServerResponse) {
         res.end('Server error')
     })
     stream.pipe(res)
-}
-
-function logRequest(req: IncomingMessage): void {
-    const addr = (req.socket && (req.socket.remoteAddress || req.socket.remoteFamily)) || '-'
-    const method = req.method || '-'
-    const url = req.url || '-'
-    debug(`${addr} "${method} ${url}"`)
 }
 
 const contentType: Record<string, string> = {
@@ -44,8 +37,8 @@ const contentType: Record<string, string> = {
     '.woff2': 'font/woff2'
 }
 
-async function handleRequest(req: IncomingMessage, res: ServerResponse) {
-    logRequest(req)
+const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+    request(req)
     const host = req.headers.host ?? 'localhost'
     const rawUrl = `http://${host}${req.url ?? '/'}`
     const url = new URL(rawUrl)
@@ -69,7 +62,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
     throw Error()
 }
 
-async function tryServeFile(url: string | undefined, res: ServerResponse): Promise<boolean> {
+const tryServeFile = async (url: string | undefined, res: ServerResponse): Promise<boolean> => {
     try {
         let urlPath = decodeURIComponent(url ?? '/')
         if (urlPath === '/') urlPath = '/index.html'
@@ -86,7 +79,7 @@ async function tryServeFile(url: string | undefined, res: ServerResponse): Promi
 }
 
 let deinitizlized = false
-export async function deinit() {
+const deinit = async (): Promise<void> => {
     if (deinitizlized) return
     deinitizlized = true
     debug('deinitializing')

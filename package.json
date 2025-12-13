@@ -4,9 +4,9 @@
     "version": "0.0.1",
     "description": "Dead simple website for uptime monitoring",
     "scripts": {
-        "build:fe": "tsc && vite build",
+        "build:fe": "tsgo && vite build",
         "watch:fe": "find src | entr npm run build:fe",
-        "start:be": "bun src/server.ts",
+        "start:be": "tsgo && bun src/server.ts",
         "start": "npm run build:fe && npm run start:be"
     },
     "type": "module",

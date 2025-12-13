@@ -2,7 +2,7 @@ import { ResourceConfig, Status } from './api'
 import { write } from './db'
 import { debug, error } from './log'
 
-export function start(configs: ResourceConfig[]) {
+export const start = (configs: ResourceConfig[]) => {
     configs.forEach(config => {
         setInterval(async () => {
             try {
@@ -15,7 +15,7 @@ export function start(configs: ResourceConfig[]) {
     })
 }
 
-async function check(config: ResourceConfig): Promise<Status> {
+const check = async (config: ResourceConfig): Promise<Status> => {
     debug('check', config.name)
     if (config.type !== 'httpPing') throw Error()
     const start = performance.now()

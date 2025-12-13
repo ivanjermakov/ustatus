@@ -7,7 +7,7 @@ const sql = String.raw
 
 export let db: Database
 
-export async function initDb(): Promise<Database> {
+export const initDb = async (): Promise<Database> => {
     const db_ = await open({ filename: 'database.db', driver: sqlite3.Database })
     db = new Proxy(db_, {
         get: (target, key) => {
@@ -43,7 +43,7 @@ export async function initDb(): Promise<Database> {
     return db
 }
 
-export async function getStats(): Promise<Resource[]> {
+export const getStats = async (): Promise<Resource[]> => {
     const raw = await db.all(sql`
         select * from Status
     `)
@@ -51,7 +51,7 @@ export async function getStats(): Promise<Resource[]> {
     return []
 }
 
-export async function write(config: ResourceConfig, status: Status): Promise<void> {
+export const write = async (config: ResourceConfig, status: Status): Promise<void> => {
     await db.run(
         sql`insert into Status (name, timestamp, config, status) values (?, ?, ?, ?)`,
         config.name,
