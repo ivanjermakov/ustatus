@@ -1,8 +1,8 @@
 import { Database, open } from 'sqlite'
 import sqlite3 from 'sqlite3'
 import { Resource, ResourceConfig, Status } from './api'
-import { debug } from './log'
 import { groupBy } from './array'
+import { debug } from './log'
 
 const sql = String.raw
 
@@ -44,14 +44,12 @@ export const initDb = async (): Promise<Database> => {
     return db
 }
 
-export const getStats = async (): Promise<Resource[]> => {
-    const raw = await db.all(sql`
-        select * from Status
-    `)
-    const stats = groupBy(raw, r => r.name)
-    return Object.values(stats).map(ss => ({
+export const getResources = async (): Promise<Resource[]> => {
+    const raw = await db.all(sql`select * from Status`)
+    const resources = groupBy(raw, r => r.name)
+    return Object.values(resources).map(ss => ({
         config: JSON.parse(ss[0].config),
-        series: ss.map(s => (JSON.parse(s.status)))
+        series: ss.map(s => JSON.parse(s.status))
     }))
 }
 

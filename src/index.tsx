@@ -1,17 +1,19 @@
 /* @refresh reload */
-import { Component, onMount } from 'solid-js'
+import { Component, For, createSignal, onMount } from 'solid-js'
 import { render } from 'solid-js/web'
+import { Resource } from './api'
 import './index.css'
 
 const Main: Component = () => {
+    const [resources, setResources] = createSignal<Resource[]>([])
 
     onMount(async () => {
-        const res = await fetch('/stats')
-        const stats = await res.json()
-        console.log(stats)
+        const res = await fetch('/resources')
+        const resources_ = await res.json()
+        setResources(resources_)
     })
 
-    return <h1>μstatus</h1>
+    return <For each={resources()}>{resource => <pre>{JSON.stringify(resource)}</pre>}</For>
 }
 
 render(() => <Main />, document.getElementById('root')!)

@@ -3,7 +3,7 @@ import { IncomingMessage, ServerResponse, createServer } from 'http'
 import { extname, join, normalize } from 'path'
 import { readFile, stat } from 'fs/promises'
 import { exit } from 'process'
-import { db, getStats, initDb } from './db'
+import { db, getResources, initDb } from './db'
 import { debug, error, info, request } from './log'
 import { start } from './watchdog'
 
@@ -43,9 +43,9 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
     const rawUrl = `http://${host}${req.url ?? '/'}`
     const url = new URL(rawUrl)
 
-    if (url.pathname === '/stats') {
-        const stats = await getStats()
-        res.write(JSON.stringify(stats))
+    if (url.pathname === '/resources') {
+        const resources = await getResources()
+        res.write(JSON.stringify(resources))
         res.statusCode = 200
         res.end()
         return
@@ -55,11 +55,12 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
         return
     }
 
-    if (await tryServeFile('/', res)) {
+    if (url.pathname === '/' && await tryServeFile('/', res)) {
         return
     }
 
-    throw Error()
+    res.statusCode = 404
+    res.end()
 }
 
 const tryServeFile = async (url: string | undefined, res: ServerResponse): Promise<boolean> => {
