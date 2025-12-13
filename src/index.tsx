@@ -74,18 +74,23 @@ const Main: Component = () => {
     })
 
     return (
-        <div class="resources">
-            <For each={resourcesView()}>
-                {view => (
-                    <>
-                        <span>{view.config.name}</span>
-                        <div class="seriess">
-                            <For each={view.series}>{series => <SeriesComponent series={series} />}</For>
-                        </div>
-                    </>
-                )}
-            </For>
-        </div>
+        <>
+            <header>
+                <span>μstatus</span>
+            </header>
+            <div class="resources">
+                <For each={resourcesView()}>
+                    {view => (
+                        <>
+                            <span>{view.config.name}</span>
+                            <div class="seriess">
+                                <For each={view.series}>{series => <SeriesComponent series={series} />}</For>
+                            </div>
+                        </>
+                    )}
+                </For>
+            </div>
+        </>
     )
 }
 

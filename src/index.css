@@ -133,14 +133,26 @@ select {
 #root {
     display: flex;
     flex-direction: column;
-    margin: 1rem;
-    overflow: auto;
+    padding: .5rem;
+    height: 100%;
+    overflow-y: auto;
+
+    header {
+        display: flex;
+        align-items: center;
+        font-size: 1.25rem;
+
+        span {
+            margin-right: auto;
+        }
+    }
 
     .resources {
         display: flex;
         flex-direction: column;
         gap: .1rem;
-        min-width: 1280px;
+        overflow-x: auto;
+        height: 100%;
 
         span {
             width: fit-content;
@@ -151,6 +163,7 @@ select {
         .seriess {
             display: flex;
             align-items: center;
+            min-width: 1280px;
 
             .series {
                 display: flex;
