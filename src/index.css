@@ -198,6 +198,7 @@ select {
         position: absolute;
         display: flex;
         flex-direction: column;
+        width: 220px;
         background-color: var(--bg3);
         padding: .5rem;
         pointer-events: none;

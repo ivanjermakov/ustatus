@@ -11,6 +11,7 @@ const [resources, setResources] = createSignal<Resource[]>([])
 const [timeFrame, setTimeFrame] = createSignal<TimeFrame>('1m')
 const [hovered, setHovered] = createSignal<Series | undefined>()
 const [mouse, setMouse] = createSignal<MouseEvent | undefined>()
+let windowWidth = 640
 
 type Series = {
     from: number
@@ -30,7 +31,7 @@ const SeriesComponent: Component<SeriesProps> = (props: SeriesProps) => {
         <div
             class="series"
             classList={{
-                ok: !beforeFirst && uptimeRatio === 1,
+                ok: !beforeFirst && uptimeRatio >= 1,
                 degraded: !beforeFirst && uptimeRatio < 1 && uptimeRatio > 0,
                 down: !beforeFirst && uptimeRatio === 0
             }}
@@ -47,6 +48,7 @@ const Main: Component = () => {
         setResources(resources_)
 
         document.addEventListener('mousemove', setMouse)
+        windowWidth = window.innerWidth
     })
 
     const resourcesView = () => {
@@ -58,7 +60,8 @@ const Main: Component = () => {
     }
 
     const resourceView = (res: Resource, tf: TimeFrame) => {
-        const now = new Date().getTime()
+        let now = new Date().getTime()
+        now = Math.floor(now / 1000) * 1000
         const step = 60 * 1000
         const series: Series[] = []
         const first = res.series[0].timestamp
@@ -98,7 +101,13 @@ const Main: Component = () => {
                 </For>
             </div>
             <Show when={hovered() && mouse()}>
-                <div class="hover" style={{ left: `${mouse()!.clientX}px`, top: `${mouse()!.clientY}px` }}>
+                <div
+                    class="hover"
+                    style={{
+                        left: `${mouse()!.clientX + (mouse()!.clientX < windowWidth / 2 ? 0 : -220)}px`,
+                        top: `${mouse()!.clientY}px`
+                    }}
+                >
                     <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd H:mm:ss')}</span>
                     <span>{hovered()!.statuses.length} stats</span>
                 </div>

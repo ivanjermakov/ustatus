@@ -19,17 +19,18 @@ const check = async (config: ResourceConfig): Promise<Status> => {
     debug('check', config.name)
     if (config.type !== 'httpPing') throw Error()
     const start = performance.now()
+    const timestamp = new Date().getTime()
     try {
         const response = await fetch(config.url)
         return {
-            timestamp: new Date().getTime(),
+            timestamp,
             type: config.type,
             code: response.status,
             latency: Math.floor(performance.now() - start)
         }
     } catch (e) {
         return {
-            timestamp: new Date().getTime(),
+            timestamp,
             type: config.type,
             latency: Math.floor(performance.now() - start),
             error: JSON.stringify(e)
