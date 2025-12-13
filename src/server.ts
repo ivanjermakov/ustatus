@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs'
 import { IncomingMessage, ServerResponse, createServer } from 'http'
-import { extname, join, normalize, sep } from 'path'
+import { extname, join, normalize } from 'path'
 import { readFile, stat } from 'fs/promises'
 import { exit } from 'process'
 import { db, getStats, initDb } from './db'
@@ -58,29 +58,31 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
         return
     }
 
-    if (await tryServeFile('/', res, distPath)) {
+    if (await tryServeFile(url.pathname, res)) {
+        return
+    }
+
+    if (await tryServeFile('/', res)) {
         return
     }
 
     throw Error()
 }
 
-async function tryServeFile(url: string | undefined, res: ServerResponse, root: string): Promise<boolean> {
+async function tryServeFile(url: string | undefined, res: ServerResponse): Promise<boolean> {
     try {
         let urlPath = decodeURIComponent(url ?? '/')
         if (urlPath === '/') urlPath = '/index.html'
-        const truePath = normalize(join(root, urlPath))
-        if (!truePath.startsWith(normalize(root + sep))) return false
+        const truePath = normalize(join(distPath, urlPath))
+        if (!truePath.startsWith(normalize(`${distPath}/`))) return false
 
         const stats = await stat(truePath)
         if (stats.isFile()) {
             streamFile(truePath, res)
             return true
         }
-        return false
-    } catch (e) {
-        return false
-    }
+    } catch (e) {}
+    return false
 }
 
 let deinitizlized = false

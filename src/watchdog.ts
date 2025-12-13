@@ -22,14 +22,14 @@ async function check(config: ResourceConfig): Promise<Status> {
     try {
         const response = await fetch(config.url)
         return {
-            timestamp: new Date().getDate(),
+            timestamp: new Date().getTime(),
             type: config.type,
             code: response.status,
             latency: Math.floor(performance.now() - start)
         }
     } catch (e) {
         return {
-            timestamp: new Date().getDate(),
+            timestamp: new Date().getTime(),
             type: config.type,
             latency: Math.floor(performance.now() - start),
             error: JSON.stringify(e)
