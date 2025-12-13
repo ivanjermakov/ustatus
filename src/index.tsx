@@ -5,7 +5,7 @@ import { render } from 'solid-js/web'
 import { Resource, Status } from './api'
 import './index.css'
 
-type TimeFrame = '1m'
+type TimeFrame = '1m' | '10m'
 
 const [resources, setResources] = createSignal<Resource[]>([])
 const [timeFrame, setTimeFrame] = createSignal<TimeFrame>('1m')
@@ -60,12 +60,19 @@ const Main: Component = () => {
     }
 
     const resourceView = (res: Resource, tf: TimeFrame) => {
+        const { step, stepsTotal } = (() => {
+            switch (tf) {
+                case '1m':
+                    return { step: 60 * 1000, stepsTotal: 240 }
+                case '10m':
+                    return { step: 10 * 60 * 1000, stepsTotal: 288 }
+            }
+        })()
         let now = new Date().getTime()
         now = Math.floor(now / 1000) * 1000
-        const step = 60 * 1000
         const series: Series[] = []
         const first = res.series[0].timestamp
-        for (let t = now - 4 * 60 * 60 * 1000; t < now; t += step) {
+        for (let t = now - stepsTotal * step; t < now; t += step) {
             const from = t
             const to = t + step
             const statuses = res.series.filter(status => status.timestamp >= from && status.timestamp < to)
@@ -87,6 +94,17 @@ const Main: Component = () => {
         <>
             <header>
                 <span>μstatus</span>
+                <For each={['1m', '10m'] as const}>
+                    {tf => (
+                        <button
+                            type="button"
+                            classList={{ active: timeFrame() === tf }}
+                            onClick={() => setTimeFrame(tf)}
+                        >
+                            {tf}
+                        </button>
+                    )}
+                </For>
             </header>
             <div class="resources">
                 <For each={resourcesView()}>
@@ -109,7 +127,9 @@ const Main: Component = () => {
                     }}
                 >
                     <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd H:mm:ss')}</span>
-                    <span>{hovered()!.statuses.length} stats</span>
+                    <span>
+                        {hovered()!.statuses.length}/{hovered()!.totalMeasurements} stats
+                    </span>
                 </div>
             </Show>
         </>
