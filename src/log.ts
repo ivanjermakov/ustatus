@@ -2,7 +2,7 @@ import { format } from 'date-fns'
 import { IncomingMessage } from 'http'
 
 export const log = (level: string, stdout: boolean, ...data: any[]): void => {
-    const ts = format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+    const ts = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
     const outFn = stdout ? console.info : console.error
     outFn(`${ts} ${level}`, ...data)
 }

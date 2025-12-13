@@ -1,5 +1,6 @@
 services:
   ustatus:
+    container_name: ustatus
     build:
       context: .
       dockerfile: Dockerfile
