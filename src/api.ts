@@ -1,10 +1,7 @@
-export type ResourceType = 'httpPing'
+export type ResourceType = 'httpPing' | 'ping'
 
 export type ResourceConfig = {
     name: string
-} & {
-    type: 'httpPing'
-    url: string
     /**
      * Ping period, ms
      */
@@ -13,7 +10,16 @@ export type ResourceConfig = {
      * Request timeout, ms
      */
     timeout?: number
-}
+} & (
+    | {
+          type: 'httpPing'
+          url: string
+      }
+    | {
+          type: 'ping'
+          ip: string
+      }
+)
 
 export type Resource = {
     config: ResourceConfig
@@ -25,9 +31,14 @@ export type Status = {
      * Unix epoch
      */
     timestamp: number
-} & {
-    type: 'httpPing'
-    code?: number
     latency?: number
     error?: string
-}
+} & (
+    | {
+          type: 'httpPing'
+          code?: number
+      }
+    | {
+          type: 'ping'
+      }
+)
