@@ -27,7 +27,5 @@ jobs:
       - name: pnpm install
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: pnpm install
-      - name: pnpm install netlify
-        run: pnpm install -g netlify-cli
       - name: build
-        run: npm run build
+        run: npm run build:fe
