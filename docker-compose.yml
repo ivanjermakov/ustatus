@@ -4,12 +4,12 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    network_mode: "host"
     volumes:
       - ./ustatus.json:/ustatus.json
-      - ./database.db:/database.db
+      - ./database.db:/database.db:rw
     environment:
       - USTATUS_DIST=dist
-      - USTATUS_PORT=3000
-    ports:
-      - "3000:3000"
+      - USTATUS_PORT=3003
     restart: unless-stopped
+

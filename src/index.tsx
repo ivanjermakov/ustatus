@@ -17,23 +17,30 @@ type Series = {
     from: number
     to: number
     statuses: Status[]
-    totalMeasurements: number
-    first: number
 }
 
 type SeriesProps = {
     series: Series
 }
 const SeriesComponent: Component<SeriesProps> = (props: SeriesProps) => {
-    const uptimeRatio = props.series.statuses.length / props.series.totalMeasurements
-    const beforeFirst = props.series.from < props.series.first
+    const scores = props.series.statuses.map(s => {
+        switch (s.type) {
+            case 'httpPing':
+                if (s.code === undefined || s.code >= 300) return 0
+                return Math.min(1, s.latency ? 1000 / s.latency : 0)
+            case 'ping':
+                if (s.error !== undefined) return 0
+                return Math.min(1, s.latency ? 1000 / s.latency : 0)
+        }
+    })
+    const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : undefined
     return (
         <div
             class="series"
             classList={{
-                ok: !beforeFirst && uptimeRatio >= 1,
-                degraded: !beforeFirst && uptimeRatio < 1 && uptimeRatio > 0,
-                down: !beforeFirst && uptimeRatio === 0
+                ok: avgScore === 1,
+                degraded: avgScore !== undefined && avgScore < 1 && avgScore > 0,
+                down: avgScore === 0
             }}
             onMouseEnter={() => setHovered(props.series)}
             onMouseLeave={() => setHovered(undefined)}
@@ -71,7 +78,6 @@ const Main: Component = () => {
         let now = new Date().getTime()
         now = Math.floor(now / 1000) * 1000
         const series: Series[] = []
-        const first = res.series[0].timestamp
         for (let t = now - stepsTotal * step; t < now; t += step) {
             const from = t
             const to = t + step
@@ -79,9 +85,7 @@ const Main: Component = () => {
             series.push({
                 from,
                 to,
-                statuses,
-                totalMeasurements: Math.floor(step / res.config.period),
-                first
+                statuses
             })
         }
         return {
@@ -127,9 +131,7 @@ const Main: Component = () => {
                     }}
                 >
                     <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd H:mm:ss')}</span>
-                    <span>
-                        {hovered()!.statuses.length}/{hovered()!.totalMeasurements} stats
-                    </span>
+                    <span>{hovered()!.statuses.length} stats</span>
                 </div>
             </Show>
         </>

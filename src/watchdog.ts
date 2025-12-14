@@ -39,13 +39,15 @@ const check = async (config: ResourceConfig): Promise<Status> => {
                     return {
                         timestamp,
                         type: config.type,
-                        latency
+                        latency,
+                        code
                     }
                 } else {
                     return {
                         timestamp,
                         type: config.type,
                         latency,
+                        code,
                         error: stderr
                     }
                 }

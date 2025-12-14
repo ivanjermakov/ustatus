@@ -40,5 +40,6 @@ export type Status = {
       }
     | {
           type: 'ping'
+          code?: number
       }
 )
