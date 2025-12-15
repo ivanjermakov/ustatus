@@ -10,6 +10,10 @@ export type ResourceConfig = {
      * Request timeout, ms
      */
     timeout?: number
+    /**
+     * Whether to send notification when resource goes down/up
+     */
+    quiet?: boolean
 } & (
     | {
           type: 'httpPing'

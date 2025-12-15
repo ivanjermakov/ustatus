@@ -1,6 +1,7 @@
 import { spawn } from 'child_process'
+import { format } from 'date-fns'
 import { ResourceConfig, Status } from './api'
-import { write } from './db'
+import { db, sql, write } from './db'
 import { debug, error } from './log'
 
 export const start = (configs: ResourceConfig[]) => {
@@ -9,6 +10,7 @@ export const start = (configs: ResourceConfig[]) => {
             try {
                 const status = await check(config)
                 await write(config, status)
+                await notify(config)
             } catch (e) {
                 error('check error', config, e)
             }
@@ -31,9 +33,7 @@ const check = async (config: ResourceConfig): Promise<Status> => {
                     latency: Math.floor(performance.now() - start)
                 }
             case 'ping':
-                debug('ping')
                 const { stderr, code } = await runCmd(['ping', '-c', '1', config.ip], config.timeout)
-                debug(stderr, code)
                 const latency = Math.floor(performance.now() - start)
                 if (code === 0) {
                     return {
@@ -60,6 +60,15 @@ const check = async (config: ResourceConfig): Promise<Status> => {
             error: JSON.stringify(e)
         }
     }
+}
+
+const notify = async (config: ResourceConfig): Promise<void> => {
+    const url = process.env.NOTIFY_URL
+    if (!url) return
+    const notification = await computeNotification(config)
+    if (!notification) return
+    debug('notification', notification)
+    await fetch(url, { method: 'POST', body: notification })
 }
 
 type RunCmdResult = {
@@ -102,4 +111,51 @@ const runCmd = async (args: string[], timeout?: number) => {
             }
         })
     })
+}
+
+const computeNotification = async (config: ResourceConfig): Promise<string | undefined> => {
+    if (config.quiet === true) return
+    const statuses = (
+        await db.all(
+            sql`
+            select status, timestamp from Status
+            where name = ?
+            order by timestamp desc
+            limit 6
+        `,
+            config.name
+        )
+    ).toReversed()
+    if (statuses.length !== 6) return
+    const oks = statuses.map(s => ok(JSON.parse(s.status) as Status))
+    const timestamp = Number.parseFloat(statuses[1].timestamp)
+    if (oks[0] && !oks[1] && oks.slice(1).every(o => !o)) {
+        // was up and now down
+        return `\
+ustatus: *${config.name}* is DOWN
+\`\`\`
+since ${format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss').replaceAll('-', '\\-')}
+\`\`\`
+`
+    }
+    if (!oks[0] && oks[1] && oks.slice(1).every(o => o)) {
+        // was down and now up
+        // TODO: report for how long it was down
+        return `\
+ustatus: *${config.name}* is UP
+\`\`\`
+since ${format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss').replaceAll('-', '\\-')}
+\`\`\`
+`
+    }
+    return
+}
+
+const ok = (status: Status): boolean => {
+    switch (status.type) {
+        case 'httpPing':
+            return status.code !== undefined && status.code < 300
+        case 'ping':
+            return status.code === 0
+    }
 }

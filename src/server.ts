@@ -3,10 +3,10 @@ import { IncomingMessage, ServerResponse, createServer } from 'http'
 import { extname, join, normalize } from 'path'
 import { readFile, stat } from 'fs/promises'
 import { exit } from 'process'
+import { ResourceConfig } from './api'
 import { db, getResources, initDb } from './db'
 import { debug, error, info, request } from './log'
 import { start } from './watchdog'
-import { ResourceConfig } from './api'
 
 const streamFile = (filePath: string, res: ServerResponse): void => {
     const ext = extname(filePath).toLowerCase()
@@ -56,7 +56,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
         return
     }
 
-    if (url.pathname === '/' && await tryServeFile('/', res)) {
+    if (url.pathname === '/' && (await tryServeFile('/', res))) {
         return
     }
 
@@ -112,7 +112,7 @@ const server = createServer((req, res) => {
     })
 })
 
-const port = Number.parseInt(process.env.USTATUS_PORT ?? '3000', 10)
+const port = Number.parseInt(process.env.USTATUS_PORT ?? '3000')
 server.listen(port, () => {
     info(`server started :${port}`)
 })

@@ -4,7 +4,7 @@ import { Resource, ResourceConfig, Status } from './api'
 import { groupBy } from './array'
 import { debug } from './log'
 
-const sql = String.raw
+export const sql = String.raw
 
 export let db: Database
 

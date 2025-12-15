@@ -130,7 +130,7 @@ const Main: Component = () => {
                         top: `${mouse()!.clientY}px`
                     }}
                 >
-                    <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd H:mm:ss')}</span>
+                    <span>{format(new Date(hovered()!.from), 'yyyy-MM-dd HH:mm:ss')}</span>
                     <span>{hovered()!.statuses.length} stats</span>
                 </div>
             </Show>

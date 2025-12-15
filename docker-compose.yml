@@ -11,5 +11,6 @@ services:
     environment:
       - USTATUS_DIST=dist
       - USTATUS_PORT=3003
+      - NOTIFY_URL=
     restart: unless-stopped
 
