@@ -45,7 +45,9 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
     const url = new URL(rawUrl)
 
     if (url.pathname === '/resources') {
-        const resources = await getResources(configs)
+        const since = Number.parseInt(url.searchParams.get('since')!)
+        const resources = await getResources(configs, since)
+        res.setHeader('Content-Type', contentType['.json'])
         res.write(JSON.stringify(resources))
         res.statusCode = 200
         res.end()

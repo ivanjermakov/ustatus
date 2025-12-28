@@ -39,13 +39,18 @@ export const initDb = async (): Promise<Database> => {
         config      TEXT     NOT NULL,
         status      TEXT     NOT NULL
     )`)
+    await db.run(sql`create index if not exists statusNameTimestamp on Status(name, timestamp)`)
 
     debug('initialized')
     return db
 }
 
-export const getResources = async (configs: ResourceConfig[]): Promise<Resource[]> => {
-    const raw = await db.all(sql`select * from Status`)
+export const getResources = async (configs: ResourceConfig[], since: number): Promise<Resource[]> => {
+    const raw = await db.all(sql`
+        select * from Status
+        where name in (${configs.map(c => `'${c.name}'`).join(',')})
+        and timestamp >= ${since}
+    `)
     const resources = groupBy(raw, r => r.name)
     return Object.entries(resources).map(([name, ss]) => ({
         config: configs.find(c => c.name === name)!,

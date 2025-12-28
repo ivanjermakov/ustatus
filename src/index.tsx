@@ -1,4 +1,4 @@
-import { format } from 'date-fns'
+import { format, sub } from 'date-fns'
 /* @refresh reload */
 import { Component, For, Show, createSignal, onMount } from 'solid-js'
 import { render } from 'solid-js/web'
@@ -50,7 +50,8 @@ const SeriesComponent: Component<SeriesProps> = (props: SeriesProps) => {
 
 const Main: Component = () => {
     onMount(async () => {
-        const res = await fetch('/resources')
+        const since = sub(new Date(), { hours: 48 }).getTime()
+        const res = await fetch(`/resources?since=${since}`)
         const resources_ = await res.json()
         setResources(resources_)
 
