@@ -1,23 +1,17 @@
-import { format, sub } from 'date-fns'
 /* @refresh reload */
-import { Component, For, Show, createSignal, onMount } from 'solid-js'
+
+import { format, sub } from 'date-fns'
+import { Component, For, Show, createEffect, createSignal, onMount } from 'solid-js'
 import { render } from 'solid-js/web'
-import { Resource, Status } from './api'
+import { Dashboard, Resource, Series, TimeFrame } from './api'
 import './index.css'
 
-type TimeFrame = '1m' | '10m'
-
 const [resources, setResources] = createSignal<Resource[]>([])
+const [dashboard, setDashboard] = createSignal<Dashboard[]>([])
 const [timeFrame, setTimeFrame] = createSignal<TimeFrame>('1m')
 const [hovered, setHovered] = createSignal<Series | undefined>()
 const [mouse, setMouse] = createSignal<MouseEvent | undefined>()
 let windowWidth = 640
-
-type Series = {
-    from: number
-    to: number
-    statuses: Status[]
-}
 
 type SeriesProps = {
     series: Series
@@ -59,47 +53,26 @@ const Main: Component = () => {
         windowWidth = window.innerWidth
     })
 
-    const resourcesView = () => {
+    createEffect(async () => {
         const resources_ = resources()
         const timeFrame_ = timeFrame()
 
-        const view = resources_.map(r => resourceView(r, timeFrame_))
-        return view
-    }
-
-    const resourceView = (res: Resource, tf: TimeFrame) => {
-        const { step, stepsTotal } = (() => {
-            switch (tf) {
-                case '1m':
-                    return { step: 60 * 1000, stepsTotal: 240 }
-                case '10m':
-                    return { step: 10 * 60 * 1000, stepsTotal: 288 }
-            }
-        })()
-        let now = new Date().getTime()
-        now = Math.floor(now / 1000) * 1000
-        const series: Series[] = []
-        for (let t = now - stepsTotal * step; t < now; t += step) {
-            const from = t
-            const to = t + step
-            const statuses = res.series.filter(status => status.timestamp >= from && status.timestamp < to)
-            series.push({
-                from,
-                to,
-                statuses
-            })
-        }
-        return {
-            config: res.config,
-            series
-        }
-    }
+        const dashboard = await Promise.all(
+            resources_.map(
+                async r =>
+                    (await (
+                        await fetch(`/dashboard?timeFrame=${timeFrame_}&name=${r.config.name}`)
+                    ).json()) as Dashboard
+            )
+        )
+        setDashboard(dashboard)
+    })
 
     return (
         <>
             <header>
                 <span>μstatus</span>
-                <For each={['1m', '10m'] as const}>
+                <For each={['1m', '10m', '1h'] as const}>
                     {tf => (
                         <button
                             type="button"
@@ -112,12 +85,12 @@ const Main: Component = () => {
                 </For>
             </header>
             <div class="resources">
-                <For each={resourcesView()}>
-                    {view => (
+                <For each={dashboard()}>
+                    {d => (
                         <>
-                            <span>{view.config.name}</span>
+                            <span>{d.config.name}</span>
                             <div class="seriess">
-                                <For each={view.series}>{series => <SeriesComponent series={series} />}</For>
+                                <For each={d.series}>{series => <SeriesComponent series={series} />}</For>
                             </div>
                         </>
                     )}

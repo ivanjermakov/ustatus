@@ -3,8 +3,8 @@ import { IncomingMessage, ServerResponse, createServer } from 'http'
 import { extname, join, normalize } from 'path'
 import { readFile, stat } from 'fs/promises'
 import { exit } from 'process'
-import { ResourceConfig } from './api'
-import { db, getResources, initDb } from './db'
+import { ResourceConfig, TimeFrame } from './api'
+import { db, getDashboard, getResources, initDb } from './db'
 import { debug, error, info, request } from './log'
 import { start } from './watchdog'
 
@@ -49,6 +49,23 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse): Promise
         const resources = await getResources(configs, since)
         res.setHeader('Content-Type', contentType['.json'])
         res.write(JSON.stringify(resources))
+        res.statusCode = 200
+        res.end()
+        return
+    }
+
+    if (url.pathname === '/dashboard') {
+        const name = url.searchParams.get('name')!
+        const timeFrame = url.searchParams.get('timeFrame') as TimeFrame
+        const config = configs.find(c => c.name === name)
+        if (!config) {
+            res.statusCode = 404
+            res.end()
+            return
+        }
+        const dashboard = await getDashboard(config, timeFrame)
+        res.setHeader('Content-Type', contentType['.json'])
+        res.write(JSON.stringify(dashboard))
         res.statusCode = 200
         res.end()
         return

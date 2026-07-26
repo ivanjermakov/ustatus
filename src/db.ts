@@ -1,6 +1,7 @@
+import { sub } from 'date-fns'
 import { Database, open } from 'sqlite'
 import sqlite3 from 'sqlite3'
-import { Resource, ResourceConfig, Status } from './api'
+import { Dashboard, Resource, ResourceConfig, Series, Status, TimeFrame } from './api'
 import { groupBy } from './array'
 import { debug } from './log'
 
@@ -56,6 +57,47 @@ export const getResources = async (configs: ResourceConfig[], since: number): Pr
         config: configs.find(c => c.name === name)!,
         series: ss.map(s => JSON.parse(s.status))
     }))
+}
+
+export const getDashboard = async (config: ResourceConfig, timeFrame: TimeFrame): Promise<Dashboard> => {
+    let since: number
+    switch (timeFrame) {
+        case '1m':
+            since = sub(new Date(), { hours: 4 }).getTime()
+            break
+        case '10m':
+            since = sub(new Date(), { days: 2 }).getTime()
+            break
+        case '1h':
+            since = sub(new Date(), { days: 12 }).getTime()
+            break
+    }
+    const resource = (await getResources([config], since))[0]
+
+    const { step, stepsTotal } = (() => {
+        switch (timeFrame) {
+            case '1m':
+                return { step: 60 * 1000, stepsTotal: 240 }
+            case '10m':
+                return { step: 10 * 60 * 1000, stepsTotal: 288 }
+            case '1h':
+                return { step: 60 * 60 * 1000, stepsTotal: 240 }
+        }
+    })()
+    let now = new Date().getTime()
+    now = Math.floor(now / 1000) * 1000
+    const series: Series[] = []
+    for (let t = now - stepsTotal * step; t < now; t += step) {
+        const from = t
+        const to = t + step
+        const statuses = resource.series.filter(status => status.timestamp >= from && status.timestamp < to)
+        series.push({
+            from,
+            to,
+            statuses
+        })
+    }
+    return { config, series }
 }
 
 export const write = async (config: ResourceConfig, status: Status): Promise<void> => {

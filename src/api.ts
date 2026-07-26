@@ -47,3 +47,16 @@ export type Status = {
           code?: number
       }
 )
+
+export type TimeFrame = '1m' | '10m' | '1h'
+
+export type Dashboard = {
+    config: ResourceConfig
+    series: Series[]
+}
+
+export type Series = {
+    from: number
+    to: number
+    statuses: Status[]
+}
